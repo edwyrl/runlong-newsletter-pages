@@ -1,1 +1,38 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>确认订阅</title></head><body><p>正在确认订阅…</p><script>const base="https://dizhbjbmuwbpivpvahkj.supabase.co/functions/v1";location.replace(`${base}/confirm${location.search}`);</script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>确认订阅</title>
+  <style>body{margin:0;background:#f4f7fb;color:#172033;font:16px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.card{max-width:520px;margin:12vh auto;padding:40px 32px;background:#fff;border:1px solid #e5eaf2;border-radius:18px;box-shadow:0 12px 36px #17203312;text-align:center}h1{margin:0 0 14px;font-size:28px}p{margin:0;color:#5c667a}.ok{color:#087f5b}.bad{color:#b42318}@media(max-width:600px){.card{margin:8vh 16px;padding:32px 24px}}</style>
+</head>
+<body>
+  <main class="card"><h1 id="title">正在确认订阅…</h1><p id="message">请稍候。</p></main>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const status = params.get("status");
+    const title = document.getElementById("title");
+    const message = document.getElementById("message");
+    if (status === "confirmed") {
+      title.textContent = "订阅已确认";
+      title.className = "ok";
+      message.textContent = "感谢订阅，之后的正式报告会发送到你的邮箱。";
+    } else if (status === "invalid") {
+      title.textContent = "链接已失效";
+      title.className = "bad";
+      message.textContent = "请重新提交邮箱以获取新的确认邮件。";
+    } else if (status === "error") {
+      title.textContent = "确认失败";
+      title.className = "bad";
+      message.textContent = "系统暂时无法完成确认，请稍后重试。";
+    } else if (params.get("token")) {
+      const base = "https://dizhbjbmuwbpivpvahkj.supabase.co/functions/v1";
+      location.replace(`${base}/confirm?token=${encodeURIComponent(params.get("token"))}`);
+    } else {
+      title.textContent = "链接无效";
+      title.className = "bad";
+      message.textContent = "缺少确认参数，请重新提交订阅。";
+    }
+  </script>
+</body>
+</html>
