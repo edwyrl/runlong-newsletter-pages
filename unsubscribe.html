@@ -10,10 +10,11 @@
   <main class="card">
     <h1 id="title">确认退订</h1>
     <p id="message" aria-live="polite">确认后，你将不再收到 Runlong Newsletter 的正式报告。</p>
-    <div class="actions" id="actions">
-      <button class="button button-danger" id="confirm" type="button">确认退订</button>
+    <form class="actions" id="actions" method="post" action="https://dizhbjbmuwbpivpvahkj.supabase.co/functions/v1/unsubscribe">
+      <input id="token" name="token" type="hidden">
+      <button class="button button-danger" id="confirm" type="submit">确认退订</button>
       <button class="button button-secondary" id="cancel" type="button">暂不退订</button>
-    </div>
+    </form>
   </main>
   <script>
     const params = new URLSearchParams(location.search);
@@ -24,6 +25,7 @@
     const confirmButton = document.getElementById("confirm");
     const cancelButton = document.getElementById("cancel");
     const token = params.get("token");
+    const tokenInput = document.getElementById("token");
     const hideActions = () => { actions.hidden = true; };
     if (status === "unsubscribed") {
       hideActions();
@@ -41,13 +43,12 @@
       title.className = "bad";
       message.textContent = "系统暂时无法完成退订，请稍后重试。";
     } else if (token) {
-      const base = "https://dizhbjbmuwbpivpvahkj.supabase.co/functions/v1";
-      confirmButton.addEventListener("click", () => {
+      tokenInput.value = token;
+      actions.addEventListener("submit", () => {
         confirmButton.disabled = true;
         cancelButton.disabled = true;
         confirmButton.textContent = "正在退订…";
         message.textContent = "正在提交退订请求，请稍候。";
-        location.assign(`${base}/unsubscribe?token=${encodeURIComponent(token)}`);
       });
       cancelButton.addEventListener("click", () => {
         title.textContent = "未退订";
