@@ -4,31 +4,58 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>退订</title>
-  <style>body{margin:0;background:#f4f7fb;color:#172033;font:16px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.card{max-width:520px;margin:12vh auto;padding:40px 32px;background:#fff;border:1px solid #e5eaf2;border-radius:18px;box-shadow:0 12px 36px #17203312;text-align:center}h1{margin:0 0 14px;font-size:28px}p{margin:0;color:#5c667a}.ok{color:#087f5b}.bad{color:#b42318}@media(max-width:600px){.card{margin:8vh 16px;padding:32px 24px}}</style>
+  <style>body{margin:0;background:#f4f7fb;color:#172033;font:16px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.card{max-width:520px;margin:12vh auto;padding:40px 32px;background:#fff;border:1px solid #e5eaf2;border-radius:18px;box-shadow:0 12px 36px #17203312;text-align:center}h1{margin:0 0 14px;font-size:28px;line-height:1.3}p{margin:0;color:#5c667a}.actions{display:flex;justify-content:center;gap:12px;margin-top:28px;flex-wrap:wrap}.button{min-height:48px;padding:0 22px;border:1px solid transparent;border-radius:10px;font:600 16px/46px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;touch-action:manipulation}.button:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}.button-danger{background:#b42318;color:#fff}.button-danger:hover{background:#912018}.button-danger:disabled{cursor:not-allowed;opacity:.55}.button-secondary{background:#fff;border-color:#cbd5e1;color:#334155}.button-secondary:hover{background:#f8fafc}.ok{color:#087f5b}.bad{color:#b42318}@media(max-width:600px){.card{margin:8vh 16px;padding:32px 24px}.actions{flex-direction:column}.button{width:100%}}</style>
 </head>
 <body>
-  <main class="card"><h1 id="title">正在处理退订…</h1><p id="message">请稍候。</p></main>
+  <main class="card">
+    <h1 id="title">确认退订</h1>
+    <p id="message" aria-live="polite">确认后，你将不再收到 Runlong Newsletter 的正式报告。</p>
+    <div class="actions" id="actions">
+      <button class="button button-danger" id="confirm" type="button">确认退订</button>
+      <button class="button button-secondary" id="cancel" type="button">暂不退订</button>
+    </div>
+  </main>
   <script>
     const params = new URLSearchParams(location.search);
     const status = params.get("status");
     const title = document.getElementById("title");
     const message = document.getElementById("message");
+    const actions = document.getElementById("actions");
+    const confirmButton = document.getElementById("confirm");
+    const cancelButton = document.getElementById("cancel");
+    const token = params.get("token");
+    const hideActions = () => { actions.hidden = true; };
     if (status === "unsubscribed") {
+      hideActions();
       title.textContent = "已退订";
       title.className = "ok";
       message.textContent = "你已停止接收正式报告。";
     } else if (status === "invalid") {
+      hideActions();
       title.textContent = "链接无效";
       title.className = "bad";
       message.textContent = "该退订链接无效或已失效。";
     } else if (status === "error") {
+      hideActions();
       title.textContent = "退订失败";
       title.className = "bad";
       message.textContent = "系统暂时无法完成退订，请稍后重试。";
-    } else if (params.get("token")) {
+    } else if (token) {
       const base = "https://dizhbjbmuwbpivpvahkj.supabase.co/functions/v1";
-      location.replace(`${base}/unsubscribe?token=${encodeURIComponent(params.get("token"))}`);
+      confirmButton.addEventListener("click", () => {
+        confirmButton.disabled = true;
+        cancelButton.disabled = true;
+        confirmButton.textContent = "正在退订…";
+        message.textContent = "正在提交退订请求，请稍候。";
+        location.assign(`${base}/unsubscribe?token=${encodeURIComponent(token)}`);
+      });
+      cancelButton.addEventListener("click", () => {
+        title.textContent = "未退订";
+        message.textContent = "没有进行任何更改，你可以安全地关闭此页面。";
+        hideActions();
+      });
     } else {
+      hideActions();
       title.textContent = "链接无效";
       title.className = "bad";
       message.textContent = "缺少退订参数。";
