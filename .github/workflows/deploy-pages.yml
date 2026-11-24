@@ -29,12 +29,38 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
+        id: upload
         uses: actions/upload-pages-artifact@v4
         with:
           path: .
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/github-script@v8
+        timeout-minutes: 30
+        env:
+          PAGES_ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
         with:
-          timeout: 1800000
+          script: |
+            const artifact = Number(process.env.PAGES_ARTIFACT_ID)
+            if (!Number.isSafeInteger(artifact) || artifact < 1) {
+              throw new Error('Upload did not return a valid artifact ID')
+            }
+            const repo = context.repo
+            const {data} = await github.request('POST /repos/{owner}/{repo}/pages/deployments', {
+              ...repo, artifact_id: artifact, pages_build_version: context.sha,
+              oidc_token: await core.getIDToken()
+            })
+            core.setOutput('page_url', data.page_url)
+            const deployment = data.id || data.status_url?.split('/').pop() || context.sha
+            for (;;) {
+              await new Promise(resolve => setTimeout(resolve, 10000))
+              const result = await github.request('GET /repos/{owner}/{repo}/pages/deployments/{deployment_id}', {
+                ...repo, deployment_id: deployment
+              })
+              const status = result.data.status
+              if (status === 'succeed') break
+              if (!['queued', 'deployment_in_progress', 'syncing_files', 'updating_pages', 'finalizing'].includes(status)) {
+                throw new Error('Pages deployment status: ' + status)
+              }
+            }
